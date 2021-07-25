@@ -1,4 +1,9 @@
+use derive_more::{Display, Error};
 use strum_macros::EnumIter;
+
+#[derive(Copy, Clone, Debug, Display, Error)]
+#[display(fmt = "No cards")]
+pub struct NoCardsError;
 
 #[derive(Copy, Clone, Debug, EnumIter, PartialOrd, Ord, PartialEq, Eq)]
 pub enum Rank {

@@ -2,31 +2,51 @@
 
 mod game;
 use crate::game::card::*;
-use crate::game::deck::Deck;
-use crate::game::hand::Hand;
+use crate::game::*;
 
 fn main() {
-    let mut deck = Deck::default();
-    deck.shuffle();
+    let mut game = Game::new();
+    game.add_player();
+    game.add_player();
+    game.start();
 
-    let mut hand1 = Hand::default();
-    let mut hand2 = Hand::default();
-    let mut hand3 = Hand::default();
-    let mut hand4 = Hand::default();
+    game.try_turn(
+        0,
+        [
+            Some(Card {
+                suit: Suit::Hearts,
+                rank: Rank::Ace,
+            }),
+            Some(Card {
+                suit: Suit::Hearts,
+                rank: Rank::Two,
+            }),
+            None,
+            None,
+        ],
+    )
+    .unwrap();
 
-    let hands = &mut vec![&mut hand1, &mut hand2, &mut hand3, &mut hand4];
+    println!("{:?}", game.pile);
 
-    deck.deal(hands);
-
-    println!("{:?}", deck);
-
-    for hand in hands {
-        println!("{:?}", hand);
-        hand.remove(&Card {
-            rank: Rank::Ace,
-            suit: Suit::Hearts,
-        })
-        .unwrap();
-        println!("{:?}", hand.count());
+    game.challenge(1).unwrap();
+    for player in &game.players {
+        println!("{} {:?}", player.id, player.hand.count());
     }
+
+    game.try_turn(
+        1,
+        [
+            Some(Card {
+                suit: Suit::Hearts,
+                rank: Rank::Ace,
+            }),
+            None,
+            None,
+            None,
+        ],
+    )
+    .unwrap();
+
+    //.unwrap();
 }

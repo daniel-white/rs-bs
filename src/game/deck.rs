@@ -3,6 +3,7 @@ use super::hand::Hand;
 use rand::{thread_rng, Rng};
 use std::collections::vec_deque::IntoIter;
 use std::collections::VecDeque;
+use std::error::Error;
 use std::ops::Range;
 use strum::IntoEnumIterator;
 
@@ -50,23 +51,13 @@ impl Deck {
         self.cards.pop_front()
     }
 
-    pub fn draw_into(&mut self, hand: &mut Hand) -> Result<(), ()> {
+    pub fn draw_into(&mut self, hand: &mut Hand) -> Result<(), &dyn Error> {
         match self.draw() {
             Some(card) => {
                 hand.add(card);
                 Ok(())
             }
-            None => Err(()),
-        }
-    }
-
-    pub fn deal(&mut self, hands: &mut [&mut Hand]) {
-        let mut count = 0;
-        while let Some(card) = self.draw() {
-            let hand_index = count % hands.len();
-            let hand = &mut hands[hand_index];
-            (*hand).add(card);
-            count += 1;
+            None => Err(&NoCardsError),
         }
     }
 }
