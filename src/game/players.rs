@@ -1,20 +1,19 @@
-// use crate::game::cards::{Rank, Card, Cards, Suit};
-// use std::collections::BTreeSet;
-//
-// #[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
-// pub struct Turn {
-//     player: usize,
-//     claimed_rank: Rank,
-//     cards: [Option<Card>; 4],
-//     was_truthful: bool,
-// }
-//
-// fn c() {
-//     let t = Turn {
-//         player: 0,
-//         claimed_rank: Rank::Ace,
-//         cards: [None, None, None, None],
-//         was_truthful
-//     };
-//     t.cards.(Card { rank: Rank::Ace, suit: Suit::Clubs  });
-// }
+use crate::game::cards::CardSet;
+use specs::prelude::*;
+use specs::{Builder, Component, Entity, World, WorldExt};
+
+#[derive(Component)]
+pub struct Player;
+
+pub trait CreatePlayer {
+    fn create_player(&mut self) -> Entity;
+}
+
+impl CreatePlayer for World {
+    fn create_player(&mut self) -> Entity {
+        self.create_entity()
+            .with(Player)
+            .with(CardSet::default())
+            .build()
+    }
+}

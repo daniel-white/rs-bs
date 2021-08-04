@@ -5,10 +5,6 @@ use specs::{Component, VecStorage};
 use std::cmp::Ordering;
 use strum::IntoEnumIterator;
 
-#[derive(Copy, Clone, Debug, Display, Error)]
-#[display(fmt = "No cards")]
-pub struct NoCardsError;
-
 #[derive(Copy, Clone, Debug, EnumCount, EnumIter, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Rank {
     Ace,
@@ -108,9 +104,9 @@ impl Card {
 
 #[derive(Component, Clone, Default, Debug)]
 #[storage(VecStorage)]
-pub struct Cards(LinkedHashSet<Card>);
+pub struct CardSet(LinkedHashSet<Card>);
 
-impl Cards {
+impl CardSet {
     pub fn new() -> Self {
         Self(LinkedHashSet::new())
     }

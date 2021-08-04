@@ -1,85 +1,31 @@
 use specs::prelude::*;
 use specs::Component;
 
+use self::cards::*;
+use self::players::*;
+use self::systems::deal::*;
+
 pub mod cards;
-
-use cards::*;
-
-#[derive(Component)]
-struct Player;
-
-#[derive(Component)]
-struct Deck;
+pub mod players;
+pub mod systems;
 
 pub fn create_world() -> World {
     let mut world = World::new();
-    world.register::<Cards>();
+    world.register::<CardSet>();
     world.register::<Player>();
-    world.register::<Deck>();
 
-    let deck = world
-        .create_entity()
-        .with(Deck)
-        .with(Cards::standard_deck())
-        .build();
-    let player = world
-        .create_entity()
-        .with(Player)
-        .with(Cards::default())
-        .build();
-    let player2 = world
-        .create_entity()
-        .with(Player)
-        .with(Cards::default())
-        .build();
-    let player3 = world
-        .create_entity()
-        .with(Player)
-        .with(Cards::default())
-        .build();
+    let player = world.create_player();
+    let player2 = world.create_player();
+    let player3 = world.create_player();
+    let player4 = world.create_player();
+    let player5 = world.create_player();
+    let player6 = world.create_player();
 
-    let mut deal = Deal {
-        deck,
-        players: vec![player, player2, player3],
-    };
-    deal.run_now(&world);
+    Deal::new()
+        .with_players(&[player, player2, player3, player4, player5, player6])
+        .run_now(&world);
     world.maintain();
     world
-}
-
-struct Deal {
-    deck: Entity,
-    players: Vec<Entity>,
-}
-
-impl<'a> System<'a> for Deal {
-    type SystemData = WriteStorage<'a, Cards>;
-
-    fn run(&mut self, mut cards: Self::SystemData) {
-        let mut deck = cards.get(self.deck).unwrap().clone();
-        deck.shuffle();
-
-        for player in self.players.iter().cycle() {
-            let player_cards = cards.get_mut(*player).unwrap();
-            if let Some(card) = deck.take_top() {
-                player_cards.add(card);
-            } else {
-                break;
-            }
-        }
-
-        let mut deck = cards.get_mut(self.deck).unwrap();
-        deck.clear();
-
-        for player in self.players.iter() {
-            println!("====PLAYER====");
-            let player_cards = cards.get_mut(*player).unwrap();
-            player_cards.sort_by_rank();
-            for card in player_cards.iter() {
-                println!("{:?}", card);
-            }
-        }
-    }
 }
 
 // use deck::*;
