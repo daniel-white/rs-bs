@@ -1,31 +1,45 @@
-use specs::prelude::*;
-use specs::Component;
-
 use self::cards::*;
 use self::players::*;
-use self::systems::deal::*;
+use self::systems::deal_cards::*;
+use crate::game::state::GameState;
+use crate::game::systems::take_turn::take_turn;
+use hecs::World;
 
 pub mod cards;
 pub mod players;
+pub mod state;
 pub mod systems;
 
-pub fn create_world() -> World {
-    let mut world = World::new();
-    world.register::<CardSet>();
-    world.register::<Player>();
+pub type Turn = [Option<Card>; 4];
+
+pub fn create_world() {
+    let mut world = World::default();
 
     let player = world.create_player();
     let player2 = world.create_player();
-    let player3 = world.create_player();
-    let player4 = world.create_player();
-    let player5 = world.create_player();
-    let player6 = world.create_player();
 
-    Deal::new()
-        .with_players(&[player, player2, player3, player4, player5, player6])
-        .run_now(&world);
-    world.maintain();
-    world
+    let mut game_state = GameState {
+        players: vec![player, player2],
+        current_player: Some(player),
+        current_rank: Rank::Ace,
+        last_turn: None,
+        pile: CardSet::default(),
+    };
+    // let player3 = world.create_player();
+    // let player4 = world.create_player();
+    // let player5 = world.create_player();
+    // let player6 = world.create_player();
+
+    deal_cards(&mut world);
+
+    println!("{:?}", game_state);
+    take_turn(
+        &mut world,
+        &mut game_state,
+        &[Some(Card::new(Rank::Two, Suit::Hearts)), None, None, None],
+    )
+    .unwrap();
+    println!("{:?}", game_state);
 }
 
 // use deck::*;

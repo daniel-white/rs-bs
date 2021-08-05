@@ -11,5 +11,5 @@ strum = "0.21.0"
 strum_macros = "0.21"
 rand = "0.8.4"
 derive_more = "0.99"
-specs = { version = "0.16.1", features = ["specs-derive"] }
+hecs = "0.6.0"
 linked_hash_set = "0.1.4"

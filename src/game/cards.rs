@@ -1,7 +1,6 @@
 use derive_more::{Display, Error};
 use linked_hash_set::{Iter, LinkedHashSet};
 use rand::{thread_rng, Rng};
-use specs::{Component, VecStorage};
 use std::cmp::Ordering;
 use strum::IntoEnumIterator;
 
@@ -102,8 +101,7 @@ impl Card {
     }
 }
 
-#[derive(Component, Clone, Default, Debug)]
-#[storage(VecStorage)]
+#[derive(Default, Debug, PartialEq)]
 pub struct CardSet(LinkedHashSet<Card>);
 
 impl CardSet {
@@ -135,9 +133,9 @@ impl CardSet {
         self.0.insert_if_absent(card);
     }
 
-    pub fn add_all(&mut self, cards: &[Card]) {
+    pub fn add_all(&mut self, cards: &[&Card]) {
         for card in cards {
-            self.add(*card);
+            self.add(**card);
         }
     }
 
@@ -145,8 +143,14 @@ impl CardSet {
         self.0.pop_front()
     }
 
-    pub fn remove(&mut self, card: &Card) -> bool {
-        self.0.remove(card)
+    pub fn remove(&mut self, card: &Card) {
+        self.0.remove(card);
+    }
+
+    pub fn remove_all(&mut self, cards: &[&Card]) {
+        for card in cards {
+            self.remove(card);
+        }
     }
 
     pub fn clear(&mut self) {

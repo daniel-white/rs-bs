@@ -1,34 +1,45 @@
+use hecs::{Entity, World};
+
 use crate::game::cards::{Card, CardSet};
-use specs::prelude::*;
+use crate::game::players::{Player, PlayerFn, PlayerQuery};
+use crate::game::state::GameState;
+use crate::game::Turn;
+use std::collections::HashSet;
+use std::ops::Index;
 
-pub struct TakeTurn {
-    player: Option<Entity>,
-    cards: CardSet,
-}
-
-impl TakeTurn {
-    pub fn new() -> Self {
-        TakeTurn {
-            player: None,
-            cards: CardSet::new(),
-        }
+pub fn take_turn(world: &mut World, game_state: &mut GameState, turn: &Turn) -> Result<(), ()> {
+    let cards: HashSet<_> = turn.iter().flatten().collect();
+    if cards.is_empty() {
+        return Err(());
     }
 
-    pub fn with_player(&mut self, player: Entity) -> &mut Self {
-        self.player = Some(player);
-        self
+    let cards: Vec<_> = cards.into_iter().collect();
+
+    let player = game_state.current_player.ok_or(())?;
+    let hand = world.get_player_hand_mut(player).ok_or(())?;
+
+    if cards.iter().all(|c| hand.contains(c)) {
+        return Err(());
     }
 
-    pub fn with_cards(&mut self, cards: &[Option<Card>; 4]) -> &mut Self {
-        for Some(card) in cards {
-            self.cards.add(*card);
-        }
-        self
-    }
-}
+    let truthful = cards.iter().all(|c| c.rank == game_state.current_rank);
+    game_state.last_turn = Some((player, truthful));
 
-impl<'a> System<'a> for TakeTurn {
-    type SystemData = WriteStorage<'a, CardSet>;
+    game_state.pile.add_all(cards.as_slice());
+    hand.remove_all(cards.as_slice());
 
-    fn run(&mut self, mut cards: Self::SystemData) {}
+    let player_index = game_state
+        .players
+        .iter()
+        .position(|&p| p == player)
+        .unwrap();
+    game_state.current_player = Some(
+        *game_state
+            .players
+            .index((player_index + 1) % game_state.players.len()),
+    );
+
+    game_state.current_rank = game_state.current_rank.inc();
+
+    Ok(())
 }

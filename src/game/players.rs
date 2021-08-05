@@ -1,19 +1,25 @@
 use crate::game::cards::CardSet;
-use specs::prelude::*;
-use specs::{Builder, Component, Entity, World, WorldExt};
+use hecs::{Entity, World};
 
-#[derive(Component)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Player;
 
-pub trait CreatePlayer {
+pub type PlayerQuery<'a> = (&'a Player, &'a mut CardSet);
+
+pub trait PlayerFn {
     fn create_player(&mut self) -> Entity;
+    fn get_player_hand_mut(&mut self, player: Entity) -> Option<&mut CardSet>;
 }
 
-impl CreatePlayer for World {
+impl PlayerFn for World {
     fn create_player(&mut self) -> Entity {
-        self.create_entity()
-            .with(Player)
-            .with(CardSet::default())
-            .build()
+        self.spawn((Player, CardSet::default()))
+    }
+
+    fn get_player_hand_mut(&mut self, player: Entity) -> Option<&mut CardSet> {
+        match self.query_one_mut::<PlayerQuery>(player) {
+            Ok((_, hand)) => Some(hand),
+            _ => None,
+        }
     }
 }
