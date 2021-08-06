@@ -125,6 +125,10 @@ impl CardSet {
         self.0.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.count() == 0
+    }
+
     pub fn contains(&self, card: &Card) -> bool {
         self.0.contains(card)
     }

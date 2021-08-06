@@ -1,8 +1,9 @@
 use self::cards::*;
 use self::players::*;
+use self::systems::call_bs::*;
 use self::systems::deal_cards::*;
+use self::systems::take_turn::*;
 use crate::game::state::GameState;
-use crate::game::systems::take_turn::take_turn;
 use hecs::World;
 
 pub mod cards;
@@ -17,18 +18,18 @@ pub fn create_world() {
 
     let player = world.create_player();
     let player2 = world.create_player();
+    let player3 = world.create_player();
+    // let player4 = world.create_player();
+    // let player5 = world.create_player();
+    // let player6 = world.create_player();
 
     let mut game_state = GameState {
-        players: vec![player, player2],
+        players: vec![player, player2, player3],
         current_player: Some(player),
         current_rank: Rank::Ace,
         last_turn: None,
         pile: CardSet::default(),
     };
-    // let player3 = world.create_player();
-    // let player4 = world.create_player();
-    // let player5 = world.create_player();
-    // let player6 = world.create_player();
 
     deal_cards(&mut world);
 
@@ -36,9 +37,18 @@ pub fn create_world() {
     take_turn(
         &mut world,
         &mut game_state,
+        &[Some(Card::new(Rank::Ace, Suit::Hearts)), None, None, None],
+    )
+    .unwrap();
+    println!("{:?}", game_state);
+    take_turn(
+        &mut world,
+        &mut game_state,
         &[Some(Card::new(Rank::Two, Suit::Hearts)), None, None, None],
     )
     .unwrap();
+    println!("{:?}", game_state);
+    call_bs(&mut world, &mut game_state, player3).unwrap();
     println!("{:?}", game_state);
 }
 
