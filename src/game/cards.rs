@@ -1,21 +1,22 @@
-use derive_more::{Display, Error};
 use linked_hash_set::{Iter, LinkedHashSet};
 use rand::{thread_rng, Rng};
 use std::cmp::Ordering;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use strum::IntoEnumIterator;
 
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, EnumCount, EnumIter, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Rank {
-    Ace,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
+    Ace = 1,
+    Two = 2,
+    Three = 3,
+    Four = 4,
+    Five = 5,
+    Six = 6,
+    Seven = 7,
+    Eight = 8,
+    Nine = 9,
+    Ten = 10,
     Jack,
     Queen,
     King,
@@ -23,23 +24,34 @@ pub enum Rank {
 
 impl Rank {
     pub fn inc(self) -> Self {
-        if self == Self::King {
-            Self::Ace
-        } else {
-            Rank::iter()
+        match self {
+            Self::King => Self::Ace,
+            _ => Rank::iter()
                 .nth(self as usize + 1)
-                .expect("invalid rank index")
+                .expect("invalid rank index"),
         }
     }
 
     pub fn dec(self) -> Self {
-        if self == Self::Ace {
-            Self::King
-        } else {
-            Rank::iter()
+        match self {
+            Self::Ace => Self::King,
+            _ => Rank::iter()
                 .nth(self as usize - 1)
-                .expect("invalid rank index")
+                .expect("invalid rank index"),
         }
+    }
+}
+
+impl Display for Rank {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let rank_str = match self {
+            Rank::Ace => "A".to_owned(),
+            Rank::Jack => "J".to_owned(),
+            Rank::Queen => "Q".to_owned(),
+            Rank::King => "K".to_owned(),
+            rank => (*rank as u8).to_string(),
+        };
+        write!(f, "{}", rank_str)
     }
 }
 
@@ -71,6 +83,18 @@ pub enum Suit {
     Diamonds,
 }
 
+impl Display for Suit {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let suit_emoji = match self {
+            Suit::Spades => "♠️",
+            Suit::Hearts => "♥️",
+            Suit::Clubs => "♣️",
+            Suit::Diamonds => "♦️️",
+        };
+        write!(f, "{}", suit_emoji)
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Card {
     pub rank: Rank,
@@ -95,6 +119,12 @@ impl Ord for Card {
     }
 }
 
+impl Display for Card {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "[{}{} ]", self.rank, self.suit)
+    }
+}
+
 impl Card {
     pub fn new(rank: Rank, suit: Suit) -> Self {
         Self { rank, suit }
@@ -104,13 +134,22 @@ impl Card {
 #[derive(Default, Debug, PartialEq)]
 pub struct CardSet(LinkedHashSet<Card>);
 
+impl Display for CardSet {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        for card in self.0.iter() {
+            write!(f, "{} ", card)?
+        }
+        Ok(())
+    }
+}
+
 impl CardSet {
-    pub fn new() -> Self {
+    pub fn new_empty() -> Self {
         Self(LinkedHashSet::new())
     }
 
-    pub fn standard_deck() -> Self {
-        let mut instance = Self(LinkedHashSet::with_capacity(52));
+    pub fn new_standard_deck() -> CardSet {
+        let mut instance = CardSet(LinkedHashSet::with_capacity(52));
 
         for suit in Suit::iter() {
             for rank in Rank::iter() {
@@ -143,6 +182,11 @@ impl CardSet {
         }
     }
 
+    fn reset(&mut self, cards: &[&Card]) {
+        self.clear();
+        self.add_all(&cards);
+    }
+
     pub fn take_top(&mut self) -> Option<Card> {
         self.0.pop_front()
     }
@@ -151,7 +195,7 @@ impl CardSet {
         self.0.remove(card);
     }
 
-    pub fn remove_all(&mut self, cards: &[&Card]) {
+    pub fn remove_all(&mut self, cards: &[Card]) {
         for card in cards {
             self.remove(card);
         }
@@ -166,43 +210,21 @@ impl CardSet {
     }
 
     pub fn shuffle(&mut self) {
-        let mut rng = thread_rng();
         let clone = self.0.clone();
         let mut cards: Vec<&Card> = clone.iter().collect();
-        self.clear();
 
-        let mut i = cards.len();
-        while i >= 2 {
-            i -= 1;
+        let mut rng = thread_rng();
+        for i in 2..cards.len() {
             cards.swap(i, rng.gen_range(0..i + 1));
         }
 
-        for card in cards {
-            self.0.insert(*card);
-        }
+        self.reset(&cards);
     }
 
     pub fn sort(&mut self) {
         let clone = self.0.clone();
         let mut cards: Vec<&Card> = clone.iter().collect();
-        self.clear();
-
-        cards.sort();
-
-        for card in cards {
-            self.0.insert(*card);
-        }
-    }
-
-    pub fn sort_by_rank(&mut self) {
-        let clone = self.0.clone();
-        let mut cards: Vec<&Card> = clone.iter().collect();
-        self.clear();
-
         cards.sort_by_key(|c| c.rank);
-
-        for card in cards {
-            self.0.insert(*card);
-        }
+        self.reset(&cards);
     }
 }

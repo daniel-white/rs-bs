@@ -5,8 +5,14 @@ extern crate strum;
 extern crate strum_macros;
 
 mod game;
-use crate::game::*;
+
+use crate::game::cards::CardSet;
 
 fn main() {
-    create_world();
+    let mut cards = CardSet::new_standard_deck();
+    println!("Pre: {}", cards);
+    cards.shuffle();
+    println!("Post: {}", cards);
+    cards.sort();
+    println!("Post: {}", cards);
 }
