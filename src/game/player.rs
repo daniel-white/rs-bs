@@ -17,8 +17,12 @@ impl Player {
         self.hand.add(card);
     }
 
-    pub fn add_cards(&mut self, cards: &[&Card]) {
+    pub fn add_cards(&mut self, cards: &[Card]) {
         self.hand.add_all(cards);
+    }
+
+    pub fn remove_card(&mut self, card: &Card) -> Option<Card> {
+        self.hand.remove(card)
     }
 
     pub fn sort_hand(&mut self) {

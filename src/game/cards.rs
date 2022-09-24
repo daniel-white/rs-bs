@@ -55,26 +55,6 @@ impl Display for Rank {
     }
 }
 
-#[test]
-pub fn rank_inc() {
-    assert_eq!(Rank::Two.inc(), Rank::Three);
-}
-
-#[test]
-pub fn rank_inc_wrap() {
-    assert_eq!(Rank::King.inc(), Rank::Ace);
-}
-
-#[test]
-pub fn rank_dec() {
-    assert_eq!(Rank::Two.dec(), Rank::Ace);
-}
-
-#[test]
-pub fn rank_dec_wrap() {
-    assert_eq!(Rank::Ace.dec(), Rank::King);
-}
-
 #[derive(Copy, Clone, Debug, EnumIter, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Suit {
     Spades,
@@ -145,11 +125,11 @@ impl Display for CardSet {
 
 impl CardSet {
     pub fn new_empty() -> Self {
-        Self(LinkedHashSet::new())
+        Self(LinkedHashSet::with_capacity(52))
     }
 
     pub fn new_standard_deck() -> CardSet {
-        let mut instance = CardSet(LinkedHashSet::with_capacity(52));
+        let mut instance = Self::new_empty();
 
         for suit in Suit::iter() {
             for rank in Rank::iter() {
@@ -176,23 +156,27 @@ impl CardSet {
         self.0.insert_if_absent(card);
     }
 
-    pub fn add_all(&mut self, cards: &[&Card]) {
+    pub fn add_all(&mut self, cards: &[Card]) {
         for card in cards {
-            self.add(**card);
+            self.add(*card);
         }
     }
 
-    fn reset(&mut self, cards: &[&Card]) {
+    fn reset(&mut self, cards: &[Card]) {
         self.clear();
-        self.add_all(&cards);
+        self.add_all(cards);
     }
 
     pub fn take_top(&mut self) -> Option<Card> {
         self.0.pop_front()
     }
 
-    pub fn remove(&mut self, card: &Card) {
-        self.0.remove(card);
+    pub fn remove(&mut self, card: &Card) -> Option<Card> {
+        if self.0.remove(card) {
+            Some(*card)
+        } else {
+            None
+        }
     }
 
     pub fn remove_all(&mut self, cards: &[Card]) {
@@ -211,7 +195,7 @@ impl CardSet {
 
     pub fn shuffle(&mut self) {
         let clone = self.0.clone();
-        let mut cards: Vec<&Card> = clone.iter().collect();
+        let mut cards: Vec<Card> = clone.into_iter().collect();
 
         let mut rng = thread_rng();
         for i in 2..cards.len() {
@@ -223,8 +207,33 @@ impl CardSet {
 
     pub fn sort(&mut self) {
         let clone = self.0.clone();
-        let mut cards: Vec<&Card> = clone.iter().collect();
+        let mut cards: Vec<Card> = clone.into_iter().collect();
         cards.sort_by_key(|c| c.rank);
         self.reset(&cards);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn rank_inc() {
+        assert_eq!(Rank::Two.inc(), Rank::Three);
+    }
+
+    #[test]
+    pub fn rank_inc_wrap() {
+        assert_eq!(Rank::King.inc(), Rank::Ace);
+    }
+
+    #[test]
+    pub fn rank_dec() {
+        assert_eq!(Rank::Two.dec(), Rank::Ace);
+    }
+
+    #[test]
+    pub fn rank_dec_wrap() {
+        assert_eq!(Rank::Ace.dec(), Rank::King);
     }
 }
